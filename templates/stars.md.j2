@@ -23,12 +23,10 @@
 {% set ai_tags = repo.summary.tags_zh or repo.summary.tags or [] %}
 {% endif %}
 {% set topics = repo.topics or [] %}
-
 > {% for t in ai_tags %}`#{{ t }}` {% endfor %}{% for t in topics %}`#{{ t }}` {% endfor %}
->
+
 > {{ repo.summary[current_lang] if repo.summary[current_lang] else repo.summary.zh }}
 {% if repo.description %}
-
 > <sub>{{ repo.description | trim }}</sub>
 {% endif %}
 
