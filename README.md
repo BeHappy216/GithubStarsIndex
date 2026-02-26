@@ -35,32 +35,35 @@
 
 ### 第二步：配置环境 (二选一)
 
-本项目支持通过 GitHub 界面配置，也支持通过 `.env` 文件配置。**配置优先级：GitHub Secrets > .env 文件**。
+本项目通过环境变量驱动，**配置优先级：GitHub Secrets > .env 文件**。
 
 #### 方案 A：使用 GitHub 环境变量 (推荐，适合持续运行)
 
 进入仓库的 **Settings → Secrets and variables → Actions** 进行配置：
 
-**🔐 Secrets** (必须，加密保存)
+**🔐 必填项 (Required Secrets/Variables)**
+- `GH_USERNAME`: 要抓取 Stars 的 GitHub 用户名。
 - `AI_API_KEY`: 你的 AI 接口 API Key。
-- `VAULT_PAT`: Vault 仓库的写入权限 Token (仅同步到 Obsidian 时需要)。
 
-**📋 Variables** (可选，明文保存)
-以下参数若不配置，将使用默认值：
-- `GH_USERNAME`: 要抓取 Stars 的 GitHub 用户名 (必填)。
-- `AI_BASE_URL`: AI 接口地址。
-- `AI_MODEL`: 模型名称。
+**📋 可选项 (Optional Variables)**
+以下参数有内置默认值，通常无需配置：
+- `AI_BASE_URL`: AI 接口地址 (默认使用 OpenAI 官方地址)。
+- `AI_MODEL`: 模型名称 (默认 `gpt-4o-mini`)。
 - `OUTPUT_FILENAME`: 生成文件的基准名 (默认 `stars`)。
 - `VAULT_SYNC_PATH`: Vault 里的存放目录 (默认 `GitHub-Stars/`)。
-- `PAGES_SYNC_ENABLED`: 是否同步到 Pages (填 `true` 开启)。
+- `PAGES_SYNC_ENABLED`: 是否同步到 Pages (默认 `true`)。
 
-#### 方案 B：使用 .env 文件 (适合本地开发或快速修改)
+> [!TIP]
+> **关于 GitHub API 限制**：
+> - **线上运行 (Actions)**：工作流会自动注入 `GITHUB_TOKEN`，额度高达 1,000次/小时，抓取全量 Stars 无压力。
+> - **本地运行**：若不配置 `GH_TOKEN`，API 限制为 60次/小时。若 Stars 较多，建议在 `.env` 中填入 `GH_TOKEN` 以提升额度至 5,000次/小时。
+
+#### 方案 B：使用 .env 文件 (适合本地开发)
 
 1. 在仓库根目录，复制 `.env.example` 并重命名为 `.env`。
-2. 在 `.env` 中填入你的 `AI_API_KEY` 和 `GH_USERNAME` 等配置。
+2. 在 `.env` 中填入必填项。
 
-> [!IMPORTANT]
-> **本地运行必看**：为了安全，`.env` 文件已被 `.gitignore` 忽略，不会被提交。在线上 Actions 运行中，推荐使用方案 A。
+---
 
 ### 第三步：自定义定时频率
 
@@ -77,29 +80,29 @@ schedule:
 
 ---
 
-## 配置项详解 (环境变量 / .env)
+## 配置项详解
 
-| 变量名               | 说明                       | 默认值                      |
-| -------------------- | -------------------------- | --------------------------- |
-| `GH_USERNAME`        | GitHub 用户名              | - (必填)                    |
-| `AI_API_KEY`         | AI 接口 Key                | - (必填)                    |
-| `AI_BASE_URL`        | AI 接口请求地址            | `https://api.openai.com/v1` |
-| `AI_MODEL`           | 使用的 AI 模型             | `gpt-4o-mini`               |
-| `OUTPUT_FILENAME`    | 生成 MD/HTML 的文件名基准  | `stars`                     |
-| `VAULT_SYNC_ENABLED` | 是否开启 Obsidian 同步     | `false`                     |
-| `VAULT_SYNC_PATH`    | Vault 同步的目录路径       | `GitHub-Stars/`             |
-| `PAGES_SYNC_ENABLED` | 是否开启 GitHub Pages 部署 | `true`                      |
-| `MAX_CONCURRENCY`    | AI 并发处理数              | `5`                         |
+| 变量名               | 类型 | 说明                       | 默认值                      |
+| -------------------- | ---- | -------------------------- | --------------------------- |
+| `GH_USERNAME`        | 必填 | 要同步的 GitHub 用户名     | -                           |
+| `AI_API_KEY`         | 必填 | AI 接口 Key                | -                           |
+| `AI_BASE_URL`        | 可选 | OpenAI 兼容接口地址        | `https://api.openai.com/v1` |
+| `AI_MODEL`           | 可选 | 使用的 AI 模型             | `gpt-4o-mini`               |
+| `OUTPUT_FILENAME`    | 可选 | 生成 MD/HTML 的文件名基准  | `stars`                     |
+| `VAULT_SYNC_ENABLED` | 可选 | 是否开启 Obsidian 同步     | `false`                     |
+| `VAULT_REPO`         | 选填 | Vault 仓库 (`owner/repo`)  | -                           |
+| `VAULT_SYNC_PATH`    | 可选 | Vault 同步的目录路径       | `GitHub-Stars/`             |
+| `PAGES_SYNC_ENABLED` | 可选 | 是否开启 GitHub Pages 部署 | `true`                      |
+| `MAX_CONCURRENCY`    | 可选 | AI 并发处理数 (建议 1-10)  | `5`                         |
+| `GH_TOKEN`           | 选填 | 本地运行时提升 API 额度    | -                           |
 
 ---
 
 ## Obsidian 同步（可选）
 
-如果你想将生成的摘要自动推送到你的 Obsidian 仓库：
-
-1. **设置 Token**: 创建一个具有 **Contents: Write** 权限的 [Fine-grained PAT](https://github.com/settings/personal-access-tokens)。
-2. **配置配置**: 设置 `VAULT_SYNC_ENABLED=true` 和 `VAULT_REPO=用户名/仓库名`。
-3. **设置路径**: 设置 `VAULT_SYNC_PATH`，文件将自动同步到该目录下。
+1. **设置 Token**: 创建一个具有 **Contents: Write** 权限的 [Fine-grained PAT](https://github.com/settings/personal-access-tokens) 存入 Secret `VAULT_PAT`。
+2. **配置仓库**: 设置 `VAULT_SYNC_ENABLED=true` 和 `VAULT_REPO=用户名/仓库名`。
+3. **设置路径**: 设置 `VAULT_SYNC_PATH`，文件将自动同步到该目录下（自动补全 `_zh.md` / `_en.md`）。
 
 ---
 
@@ -111,39 +114,21 @@ schedule:
 2. 运行一次 Action 后，进入 **Settings -> Pages**。
 3. **Branch** 选择 `gh-pages`，目录选择 `/(root)`，保存。
 
-3. 成功运行一次 Action 后，你就可以通过 `https://<username>.github.io/<repo-name>/` 访问你的 Stars Index 页面了。
-
 ---
 
 ## 本地运行
 
 ```bash
-# 克隆仓库
+# 克隆仓库并安装依赖
 git clone https://github.com/your-username/github-stars-summary.git
 cd github-stars-summary
-
-# 安装依赖
 pip install -r requirements.txt
 
-# 使用环境变量文件进行测试 (推荐)
-# 1. 复制示例文件
+# 使用 .env 进行配置
 cp .env.example .env
-# 2. 编辑 .env 并填入你的配置
-# 3. 直接运行脚本
-python scripts/sync_stars.py
+# 编辑 .env 填入 AI_API_KEY 和 GH_USERNAME
 
-# 或者手动设置环境变量
-# ── 必填环境变量 ──
-export GH_USERNAME="your-github-username"       # 要抓取 Stars 的 GitHub 用户名
-export AI_BASE_URL="https://api.openai.com/v1"  # AI 接口地址
-export AI_API_KEY="sk-..."                       # AI API Key
-export AI_MODEL="gpt-4o-mini"     # AI 模型
-
-# ── 选填环境变量 ──
-export MAX_CONCURRENCY=5          # 并发数
-export GH_TOKEN="ghp_..."         # GitHub Token，不填也能运行，但 API 限速更严（60次/小时）
-
-# 运行
+# 运行脚本
 python scripts/sync_stars.py
 ```
 
