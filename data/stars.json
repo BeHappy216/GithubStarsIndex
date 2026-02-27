@@ -1,1 +1,204 @@
-
+{
+  "last_updated": "2026-02-27 19:56 UTC",
+  "repos": {
+    "x1xhlol/system-prompts-and-models-of-ai-tools": {
+      "metadata": {
+        "full_name": "x1xhlol/system-prompts-and-models-of-ai-tools",
+        "name": "system-prompts-and-models-of-ai-tools",
+        "owner": "x1xhlol",
+        "description": "FULL Augment Code, Claude Code, Cluely, CodeBuddy, Comet, Cursor, Devin AI, Junie, Kiro, Leap.new, Lovable, Manus, NotionAI, Orchids.app, Perplexity, Poke, Qoder, Replit, Same.dev, Trae, Traycer AI, VSCode Agent, Warp.dev, Windsurf, Xcode, Z.ai Code, Dia & v0. (And other Open Sourced) System Prompts, Internal Tools & AI Models",
+        "stars": 125757,
+        "language": "N/A",
+        "url": "https://github.com/x1xhlol/system-prompts-and-models-of-ai-tools",
+        "homepage": "",
+        "topics": [
+          "ai",
+          "bolt",
+          "cluely",
+          "copilot",
+          "cursor",
+          "cursorai",
+          "devin",
+          "github-copilot",
+          "lovable",
+          "open-source",
+          "perplexity",
+          "replit",
+          "system-prompts",
+          "trae",
+          "trae-ai",
+          "trae-ide",
+          "v0",
+          "vscode",
+          "windsurf",
+          "windsurf-ai"
+        ],
+        "updated_at": "2026-02-17"
+      },
+      "summary": {
+        "zh": "该仓库逆向工程整理了30余款主流AI编程工具的系统提示词与内部机制，涵盖Cursor、Claude Code、Devin AI、Windsurf等核心产品。提供超过30,000行真实配置，为开发者、安全研究员和架构师提供罕见的AI代理架构底层洞察，适用于提示词工程优化、竞品分析和AI安全研究。",
+        "en": "This repository reverse-engineers and aggregates system prompts and internal mechanisms from 30+ mainstream AI coding tools including Cursor, Claude Code, Devin AI, and Windsurf. With over 30,000 lines of actual configurations, it offers unprecedented insights into AI agent architectures for prompt engineering optimization, competitive analysis, and AI security research.",
+        "tags_zh": [
+          "系统提示词",
+          "AI编程代理",
+          "逆向工程",
+          "内部机制"
+        ],
+        "tags_en": [
+          "System Prompts",
+          "AI Coding Agents",
+          "Reverse Engineering",
+          "Internal Mechanisms"
+        ]
+      },
+      "pushed_at": "2026-02-17",
+      "updated_at": "2026-02-27"
+    },
+    "VrianCao/Uptimer": {
+      "metadata": {
+        "full_name": "VrianCao/Uptimer",
+        "name": "Uptimer",
+        "owner": "VrianCao",
+        "description": "A Powerful Serverless Uptime Monitoring & Status Page on Cloudflare's Edge Network",
+        "stars": 324,
+        "language": "TypeScript",
+        "url": "https://github.com/VrianCao/Uptimer",
+        "homepage": "https://status.vrian.de",
+        "topics": [
+          "cloudflare",
+          "cloudflare-d1",
+          "cloudflare-pages",
+          "cloudflare-workers",
+          "uptime-monitor",
+          "uptime-monitoring",
+          "uptimer"
+        ],
+        "updated_at": "2026-02-23"
+      },
+      "summary": {
+        "zh": "Uptimer 是基于 Cloudflare 边缘网络的零运维监控平台，通过 Workers 执行 HTTP/TCP 探测，D1 存储数据，Pages 提供实时状态页。支持多语言、Webhook 通知、事件管理和维护窗口，实现从监控到告警的一站式服务。全栈 Serverless 架构，一键部署，彻底告别运维负担。",
+        "en": "Uptimer is a powerful serverless uptime monitoring platform built on Cloudflare's edge network. Leveraging Workers for HTTP/TCP probes, D1 for persistent storage, and Pages for real-time status display, it provides comprehensive monitoring capabilities. The platform supports multi-language status pages, customizable webhook notifications, incident management, and scheduled maintenance windows. With full-stack serverless architecture and automated CI/CD, it delivers zero-ops deployment while maintaining enterprise-grade reliability.",
+        "tags_zh": [
+          "Cloudflare Workers",
+          "无服务器监控",
+          "边缘计算",
+          "状态页"
+        ],
+        "tags_en": [
+          "Cloudflare Workers",
+          "Serverless Monitoring",
+          "Edge Computing",
+          "Status Page"
+        ]
+      },
+      "pushed_at": "2026-02-23",
+      "updated_at": "2026-02-27"
+    },
+    "ling-drag0n/CloudPaste": {
+      "metadata": {
+        "full_name": "ling-drag0n/CloudPaste",
+        "name": "CloudPaste",
+        "owner": "ling-drag0n",
+        "description": "🌩️ Serverless 自托管的文件管理与文本分享工具/网盘，支持多存储聚合管理和WebDAV 服务挂载。兼容 S3、WebDAV、OneDrive、Google Drive、Telegram、HF、GitHub 等。内置   Markdown 编辑器、30+文件格式预览。支持 Cloudflare Workers 或 Docker 部署。",
+        "stars": 2121,
+        "language": "JavaScript",
+        "url": "https://github.com/ling-drag0n/CloudPaste",
+        "homepage": "https://doc.cloudpaste.qzz.io",
+        "topics": [
+          "cloudflare",
+          "cloudflare-workers",
+          "docker",
+          "file-browser",
+          "huggingface",
+          "markdown",
+          "onedrive",
+          "s3",
+          "telegram",
+          "telegrambot",
+          "webdav"
+        ],
+        "updated_at": "2026-01-23"
+      },
+      "summary": {
+        "zh": "CloudPaste 是一款基于 Cloudflare Workers 的 Serverless 自托管网盘，核心价值在于多云存储聚合管理与零运维部署。支持 S3、OneDrive、Google Drive 等 30+ 存储后端，提供统一 WebDAV 挂载。内置 Vditor Markdown 编辑器与 30+ 文件格式预览，实现个人知识库管理与团队协作。通过边缘计算实现全球加速，Docker 部署提供本地灵活性。",
+        "en": "CloudPaste is a Serverless self-hosted cloud storage built on Cloudflare Workers, aggregating 30+ storage backends including S3, OneDrive, and Google Drive with unified WebDAV mounting. It features a Vditor Markdown editor, 30+ file format previews, and edge computing acceleration across 300+ global nodes. Offering zero-maintenance deployment via Workers or Docker, it serves as an ideal solution for personal knowledge management and team collaboration.",
+        "tags_zh": [
+          "Serverless 网盘",
+          "多云存储聚合",
+          "Markdown 编辑器",
+          "Cloudflare Workers"
+        ],
+        "tags_en": [
+          "Serverless Cloud Storage",
+          "Multi-cloud Aggregation",
+          "Markdown Editor",
+          "Cloudflare Workers"
+        ]
+      },
+      "pushed_at": "2026-01-23",
+      "updated_at": "2026-02-27"
+    },
+    "vercel-labs/agent-browser": {
+      "metadata": {
+        "full_name": "vercel-labs/agent-browser",
+        "name": "agent-browser",
+        "owner": "vercel-labs",
+        "description": "Browser automation CLI for AI agents",
+        "stars": 16450,
+        "language": "TypeScript",
+        "url": "https://github.com/vercel-labs/agent-browser",
+        "homepage": "https://agent-browser.dev",
+        "topics": [],
+        "updated_at": "2026-02-26"
+      },
+      "summary": {
+        "zh": "Vercel Labs推出的AI代理浏览器自动化CLI工具，基于Rust构建提供毫秒级响应。核心亮点是通过无障碍树引用(@e1)实现AI友好的元素定位，支持点击、填充、截图等操作，为AI代理提供高效网页交互能力。",
+        "en": "Rust CLI for AI browser automation with sub-millisecond speed. Features accessibility tree references (@e1) for AI-friendly element interaction, including clicks, form fills, and screenshots.",
+        "tags_zh": [
+          "Rust CLI",
+          "AI代理自动化",
+          "无障碍树引用"
+        ],
+        "tags_en": [
+          "Rust CLI",
+          "AI Agent Automation",
+          "Accessibility Tree References"
+        ]
+      },
+      "pushed_at": "2026-02-26",
+      "updated_at": "2026-02-27"
+    },
+    "iblogc/GithubStarsIndex": {
+      "metadata": {
+        "full_name": "iblogc/GithubStarsIndex",
+        "name": "GithubStarsIndex",
+        "owner": "iblogc",
+        "description": "自动抓取 GitHub Stars，生成 AI 摘要，便于检索。",
+        "stars": 24,
+        "language": "Jinja",
+        "url": "https://github.com/iblogc/GithubStarsIndex",
+        "homepage": "https://iblogc.github.io/GithubStarsIndex/",
+        "topics": [],
+        "updated_at": "2026-02-27"
+      },
+      "summary": {
+        "zh": "GitHubStarsIndex 自动化抓取 GitHub Star 仓库，调用 AI 生成智能摘要与技术标签。支持增量更新、高并发处理，输出 Markdown 和交互式 HTML 页面，可无缝同步至 Obsidian 知识库或 GitHub Pages，实现个人技术资产的智能化管理与高效检索。",
+        "en": "GitHubStarsIndex automates fetching GitHub starred repositories and generates AI-powered summaries with technical tags. Supporting incremental updates, concurrent processing, and Jinja2 templating, it outputs structured Markdown and interactive HTML pages with search functionality. The tool seamlessly syncs to Obsidian vaults or deploys to GitHub Pages with multilingual support, transforming scattered stars into a searchable, organized technical knowledge base for efficient asset management.",
+        "tags_zh": [
+          "AI 智能摘要",
+          "技术知识库",
+          "Obsidian 同步",
+          "增量更新"
+        ],
+        "tags_en": [
+          "AI Summarization",
+          "Technical Knowledge Base",
+          "Obsidian Sync",
+          "Incremental Update"
+        ]
+      },
+      "pushed_at": "2026-02-27",
+      "updated_at": "2026-02-27"
+    }
+  }
+}
