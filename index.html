@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Stars Index | Archive</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='black'/><path d='M50 15L61 41L87 50L61 59L50 85L39 59L13 50L39 41Z' fill='%23ff3e00'/></svg>">
+
+    <style>
+        :root {
+            --bg: #080808;
+            --fg: #ffffff;
+            --fg-dim: #999999;
+            --accent: #ff3e00; /* Industrial Orange */
+            --accent-soft: rgba(255, 62, 0, 0.1);
+            --surface: #121212;
+            --border: #1f1f1f;
+            --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            --modal-overlay: rgba(0, 0, 0, 0.85);
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        [data-theme='light'] {
+            --bg: #f5f5f5;
+            --fg: #111111;
+            --fg-dim: #666666;
+            --accent: #ff3e00;
+            --accent-soft: rgba(255, 62, 0, 0.05);
+            --surface: #ffffff;
+            --border: #dddddd;
+            --modal-overlay: rgba(255, 255, 255, 0.7);
+            --glass: rgba(0, 0, 0, 0.03);
+            --glass-border: rgba(0, 0, 0, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Scanline & Noise Effect */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.05));
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 2rem 1rem; }
+        }
+
+        /* Header Enhancements */
+        header {
+            margin-bottom: 6rem;
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 2rem;
+            align-items: end;
+        }
+
+        .title-area h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(3.5rem, 15vw, 10rem);
+            line-height: 0.9;
+            letter-spacing: -0.02em;
+        }
+
+        .header-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            text-align: right;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.8rem;
+            color: var(--accent);
+            justify-content: flex-end;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.4; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .stats-grid {
+            display: flex;
+            justify-content: flex-end;
+            gap: 2rem;
+            font-size: 0.85rem;
+            color: var(--fg-dim);
+        }
+
+        .stat-item b { color: var(--fg); }
+
+        .top-langs {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .lang-tag {
+            font-size: 0.7rem;
+            background: var(--surface);
+            padding: 0.2rem 0.6rem;
+            border: 1px solid var(--border);
+        }
+
+        .header-links {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: flex-end;
+            margin-top: 1rem;
+            align-items: center;
+        }
+
+        .lang-toggle {
+            cursor: pointer;
+            padding: 0.2rem 0.5rem;
+            border: 1px solid var(--border);
+            font-size: 0.7rem;
+            transition: var(--transition);
+            background: var(--surface);
+            color: var(--fg);
+            font-family: 'Space Mono', monospace;
+        }
+
+        .lang-toggle:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .header-links a {
+            color: var(--fg);
+            text-decoration: none;
+            font-size: 0.8rem;
+            border-bottom: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .header-links a:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            padding: 0.2rem 0.5rem;
+            border: 1px solid var(--border);
+            font-size: 0.7rem;
+            transition: var(--transition);
+            background: var(--surface);
+            color: var(--fg);
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--fg);
+        }
+
+        #clock {
+            font-weight: 700;
+            color: var(--fg);
+        }
+
+        @media (max-width: 900px) {
+            header { 
+                grid-template-columns: 1fr; 
+                text-align: left; 
+                gap: 1.5rem;
+                margin-bottom: 3rem;
+                padding-bottom: 2rem;
+            }
+            .header-stats, .stats-grid, .top-langs, .header-links, .status-badge { 
+                justify-content: flex-start; 
+                text-align: left; 
+            }
+            .header-stats { gap: 1rem; }
+            .stats-grid { gap: 1rem; flex-wrap: wrap; }
+            .header-links { flex-wrap: wrap; gap: 0.8rem; }
+        }
+
+        /* Search Section */
+        .search-section {
+            margin-bottom: 4rem;
+            position: sticky;
+            top: 1rem;
+            z-index: 100;
+        }
+
+        .search-bar {
+            background: var(--bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 60px;
+        }
+
+        .search-hint {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--fg-dim);
+            border: 1px solid var(--border);
+            padding: 0.2rem 0.4rem;
+            pointer-events: none;
+        }
+
+        #search-input {
+            background: transparent;
+            border: none;
+            color: var(--fg);
+            width: 100%;
+            padding: 1rem 0;
+            font-size: 1.1rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            letter-spacing: 0.05em;
+            outline: none;
+        }
+
+        @media (max-width: 600px) {
+            .search-hint { display: none; }
+            #search-input { font-size: 1rem; }
+        }
+        
+        #search-input::placeholder { color: var(--border); }
+
+        /* Control Bar (Filter & Sort) */
+        .controls-section {
+            margin-bottom: 3rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .dropdown {
+            position: relative;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem;
+        }
+
+        .dropdown-trigger {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--fg);
+            padding: 0.6rem 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            transition: var(--transition);
+        }
+
+        .dropdown-trigger:hover {
+            border-color: var(--fg);
+        }
+
+        .dropdown-content {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            z-index: 500;
+            min-width: 200px;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .dropdown.active .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 0.8rem 1.2rem;
+            cursor: pointer;
+            transition: var(--transition);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .dropdown-item:hover {
+            background: var(--glass);
+            color: var(--accent);
+        }
+
+        .active-filters {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-chip {
+            background: var(--accent-soft);
+            color: var(--accent);
+            padding: 0.4rem 0.8rem;
+            font-size: 0.7rem;
+            font-family: 'Space Mono', monospace;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: 1px solid var(--accent);
+        }
+
+        .filter-chip span {
+            cursor: pointer;
+            opacity: 0.6;
+        }
+
+        .filter-chip span:hover { opacity: 1; }
+
+        .sort-pill-group {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--surface);
+            padding: 0.3rem;
+            border: 1px solid var(--border);
+            align-self: flex-start;
+        }
+
+        .sort-pill {
+            padding: 0.4rem 1rem;
+            font-size: 0.7rem;
+            font-family: 'Space Mono', monospace;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--fg-dim);
+        }
+
+        .sort-pill.active {
+            background: var(--fg);
+            color: var(--bg);
+        }
+
+        /* Stats Bar Enhancements */
+        .stats-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            border-color: var(--accent);
+            background: rgba(255, 62, 0, 0.02);
+        }
+
+        .stat-card-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--fg-dim);
+            text-transform: uppercase;
+        }
+
+        .stat-card-value {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .stat-card-value b { color: var(--accent); }
+
+        /* Skeleton Loading */
+        .skeleton {
+            background: linear-gradient(90deg, var(--surface) 25%, var(--border) 50%, var(--surface) 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+        }
+
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Grid */
+        .repo-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        /* Unified UI Components */
+        .ui-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 600;
+            word-break: break-all;
+            color: var(--fg);
+        }
+
+        .ui-meta {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--fg-dim);
+        }
+
+        .ui-meta b { color: var(--fg); font-weight: 700; }
+        .ui-meta .accent { color: var(--accent); }
+
+        .ui-stars {
+            color: var(--accent);
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .ui-stars svg, .ui-stars .star-icon {
+            transform: translateY(-1px);
+        }
+
+        .ui-tag {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border: 1px solid var(--border);
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--surface);
+            transition: var(--transition);
+        }
+
+        .repo-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .repo-card:hover {
+            border-color: var(--fg);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        @media (max-width: 600px) {
+            .repo-card { padding: 1.5rem; }
+            .card-title { font-size: 1.5rem; }
+        }
+
+        .card-lang {
+            margin-bottom: 1.5rem;
+            color: var(--accent);
+            border-color: var(--accent-soft);
+        }
+
+        .card-lang::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            line-height: 1.3;
+        }
+
+        .card-desc {
+            font-size: 0.95rem;
+            color: var(--fg-dim);
+            margin-bottom: 2rem;
+            flex-grow: 1;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.5;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border);
+            padding-top: 1.5rem;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: var(--modal-overlay);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .modal.active { display: flex; opacity: 1; }
+
+        .modal-content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            max-width: 1000px;
+            width: 100%;
+            padding: 4rem;
+            position: relative;
+            transform: scale(0.95);
+            transition: var(--transition);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal.active .modal-content { transform: scale(1); }
+
+        .modal-close {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: none;
+            border: none;
+            color: var(--fg);
+            font-family: 'Space Mono', monospace;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .modal-close:hover { color: var(--accent); }
+
+        .modal-title {
+            font-size: 2.5rem;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .modal-meta-group {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-section { margin-bottom: 3rem; }
+        .section-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .modal-desc {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: var(--fg-dim);
+        }
+
+        .modal-summary {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            color: var(--fg);
+        }
+
+        .topic-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+        }
+
+        .topic-tag {
+            font-size: 0.75rem;
+        }
+
+        .modal-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .btn {
+            display: block;
+            padding: 1.5rem;
+            text-align: center;
+            text-decoration: none;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.05em;
+            transition: var(--transition);
+        }
+
+        .btn-primary { background: var(--fg); color: var(--bg); }
+        .btn-secondary { border: 1px solid var(--fg); color: var(--fg); }
+        .btn:hover { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+        /* Loader */
+        #loading-trigger {
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--border);
+        }
+
+        @media (max-width: 1100px) { .repo-grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 600px) { 
+            .repo-grid { grid-template-columns: 1fr; gap: 1rem; } 
+            .container { padding-top: 2rem; }
+            header { margin-bottom: 2rem; }
+        }
+        @media (max-width: 768px) { 
+            .modal { padding: 0.5rem; }
+            .modal-content { 
+                padding: 2rem 1.5rem; 
+                margin: auto;
+                width: 100%;
+                height: 100%;
+                max-height: 100vh;
+                border: none;
+                border-radius: 0;
+            }
+            .modal-actions { grid-template-columns: 1fr; gap: 0.8rem; }
+            .btn { padding: 1.2rem; font-size: 1.2rem; }
+            .modal-title { font-size: 2.2rem; margin-top: 2rem; }
+            .modal-close { top: 1rem; right: 1rem; padding: 0.5rem; z-index: 10;}
+            .modal-header-info { flex-direction: column; gap: 1rem; }
+            .modal-section { margin-bottom: 2rem; }
+        }
+
+        .modal-header-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 10rem;
+            padding: 4rem 0;
+            border-top: 1px solid var(--border);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--fg-dim);
+            letter-spacing: 0.05em;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .footer-brand .eof-text {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            color: var(--fg);
+            line-height: 1;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .footer-center {
+            text-align: center;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            padding: 0 2rem;
+        }
+
+        .footer-right {
+            text-align: right;
+        }
+
+        .footer-tag {
+            color: var(--accent);
+            margin-top: 1rem;
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .footer-grid { grid-template-columns: 1fr; text-align: left; }
+            .footer-center { border: none; padding: 0; text-align: left; }
+            .footer-right { text-align: left; }
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border: 2px solid var(--bg);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        /* Back to Top Button */
+        .back-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 3.5rem;
+            height: 3.5rem;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            color: var(--fg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            opacity: 0;
+            visibility: hidden;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .back-to-top:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            transform: translateY(-5px);
+        }
+        @media (max-width: 768px) {
+            .back-to-top {
+                bottom: 1.5rem;
+                right: 1.5rem;
+                width: 3rem;
+                height: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="title-area">
+                <h1>Stars<br>Archive</h1>
+            </div>
+            <div class="header-stats">
+                <div class="status-badge">
+                    <div id="clock">00:00:00</div>
+                    <span>UTC+0800</span>
+                    <div class="status-dot"></div>
+                </div>
+
+                <div class="stats-dashboard" id="dashboard">
+                    <div class="stat-card">
+                        <span class="stat-card-label">TOTAL_ENTRIES</span>
+                        <div class="stat-card-value" id="s-total">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card-label">AVG_STARS</span>
+                        <div class="stat-card-value" id="s-avg">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card-label">TOP_STACK</span>
+                        <div class="stat-card-value" id="s-top-stack">--</div>
+                    </div>
+                </div>
+
+                <div class="header-links">
+                    <button id="lang-btn" class="lang-toggle">LANG: ZH_CN</button>
+                    <button id="theme-btn" class="theme-toggle">UI_THEME: NOIR_MODE</button>
+                    <a href="https://github.com/iblogc/GithubStarsIndex" target="_blank">[ SOURCE_CODE ]</a>
+                </div>
+            </div>
+        </header>
+
+        <section class="search-section">
+            <div class="search-bar">
+                <input type="text" id="search-input" placeholder="SEARCH_KEYWORD_OR_TAG...">
+                <div class="search-hint">PRESS [/] TO FOCUS</div>
+            </div>
+        </section>
+
+        <section class="controls-section">
+            <div class="filter-bar">
+                <div class="dropdown" id="lang-dropdown">
+                    <div class="dropdown-trigger">
+                        <span id="l-lang-label">LANGUAGE: ALL</span>
+                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <div class="dropdown-content" id="lang-options"></div>
+                </div>
+
+                <div class="dropdown" id="tag-dropdown">
+                    <div class="dropdown-trigger">
+                        <span id="l-tag-label">TAGS: ALL</span>
+                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <div class="dropdown-content" id="tag-options"></div>
+                </div>
+
+                <div class="sort-pill-group">
+                    <div class="sort-pill active" data-sort="pushed_at">LATEST</div>
+                    <div class="sort-pill" data-sort="stars">STARS</div>
+                    <div class="sort-pill" data-sort="full_name">A-Z</div>
+                </div>
+            </div>
+            
+            <div id="active-filters" class="active-filters"></div>
+        </section>
+
+        <main class="repo-grid" id="main-grid"></main>
+        
+        <div id="loading-trigger">SYSTEM LOADING...</div>
+
+        <footer>
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <span class="eof-text">EOF</span>
+                    <span>END OF TRANS STREAM // ALL SYSTEMS NOMINAL</span>
+                </div>
+                <div class="footer-center">
+                    <p>THIS DATA IS CURATED FROM GITHUB AND SUMMARIZED BY AI AGENTS.</p>
+                    <p>REPOSITORY INDEXED BY LONGCAT-FLASH-THINKING-2601 // PERSISTENT STORAGE ACTIVE</p>
+                </div>
+                <div class="footer-right">
+                    <span>© 2026 STARS ARCHIVE</span>
+                    <span class="footer-tag">POWERED BY: JINJA2 // PYTHON // GITHUB</span>
+                </div>
+            </div>
+        </footer>
+        <button id="back-to-top" class="back-to-top" title="BACK_TO_TOP">
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+        </button>
+    </div>
+
+    <!-- Details Modal -->
+    <div id="details-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">[ ESC_CLOSE ]</button>
+            
+            <div class="modal-section modal-header-info">
+                <div>
+                    <div id="m-lang" class="ui-tag card-lang" style="margin-bottom: 1rem;"></div>
+                    <h2 id="m-name" class="ui-title modal-title"></h2>
+                    <div class="modal-meta-group ui-meta">
+                        <div id="m-stars" class="ui-stars" style="font-size: 1.1rem;"></div>
+                        <div id="m-updated"></div>
+                    </div>
+                    <div id="m-topics" class="topic-list"></div>
+                </div>
+            </div>
+
+            <div class="modal-section">
+                <span id="l-desc" class="section-label">DESCRIPTION</span>
+                <p id="m-desc" class="modal-desc"></p>
+            </div>
+
+            <div class="modal-section">
+                <span id="l-sum" class="section-label">AI_SUMMARY</span>
+                <p id="m-summary" class="modal-summary"></p>
+                <div id="m-tags" class="topic-list" style="margin-top: 1rem;"></div>
+            </div>
+
+            <div class="modal-actions">
+                <a id="m-github" href="#" target="_blank" class="btn btn-primary">VIEW_ON_GITHUB</a>
+                <a id="m-home" href="#" target="_blank" class="btn btn-secondary">VISIT_HOMEPAGE</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Injection
+        const RAW_DATA = [{"description": "\ud83c\udf29\ufe0f Serverless \u81ea\u6258\u7ba1\u7684\u6587\u4ef6\u7ba1\u7406\u4e0e\u6587\u672c\u5206\u4eab\u5de5\u5177/\u7f51\u76d8\uff0c\u652f\u6301\u591a\u5b58\u50a8\u805a\u5408\u7ba1\u7406\u548cWebDAV \u670d\u52a1\u6302\u8f7d\u3002\u517c\u5bb9 S3\u3001WebDAV\u3001OneDrive\u3001Google Drive\u3001Telegram\u3001HF\u3001GitHub \u7b49\u3002\u5185\u7f6e   Markdown \u7f16\u8f91\u5668\u300130+\u6587\u4ef6\u683c\u5f0f\u9884\u89c8\u3002\u652f\u6301 Cloudflare Workers \u6216 Docker \u90e8\u7f72\u3002", "full_name": "ling-drag0n/CloudPaste", "homepage": "https://doc.cloudpaste.qzz.io", "language": "JavaScript", "name": "CloudPaste", "owner": "ling-drag0n", "stars": 2121, "summary": {"en": "CloudPaste is a Serverless self-hosted cloud storage built on Cloudflare Workers, aggregating 30+ storage backends including S3, OneDrive, and Google Drive with unified WebDAV mounting. It features a Vditor Markdown editor, 30+ file format previews, and edge computing acceleration across 300+ global nodes. Offering zero-maintenance deployment via Workers or Docker, it serves as an ideal solution for personal knowledge management and team collaboration.", "tags_en": ["Serverless Cloud Storage", "Multi-cloud Aggregation", "Markdown Editor", "Cloudflare Workers"], "tags_zh": ["Serverless \u7f51\u76d8", "\u591a\u4e91\u5b58\u50a8\u805a\u5408", "Markdown \u7f16\u8f91\u5668", "Cloudflare Workers"], "zh": "CloudPaste \u662f\u4e00\u6b3e\u57fa\u4e8e Cloudflare Workers \u7684 Serverless \u81ea\u6258\u7ba1\u7f51\u76d8\uff0c\u6838\u5fc3\u4ef7\u503c\u5728\u4e8e\u591a\u4e91\u5b58\u50a8\u805a\u5408\u7ba1\u7406\u4e0e\u96f6\u8fd0\u7ef4\u90e8\u7f72\u3002\u652f\u6301 S3\u3001OneDrive\u3001Google Drive \u7b49 30+ \u5b58\u50a8\u540e\u7aef\uff0c\u63d0\u4f9b\u7edf\u4e00 WebDAV \u6302\u8f7d\u3002\u5185\u7f6e Vditor Markdown \u7f16\u8f91\u5668\u4e0e 30+ \u6587\u4ef6\u683c\u5f0f\u9884\u89c8\uff0c\u5b9e\u73b0\u4e2a\u4eba\u77e5\u8bc6\u5e93\u7ba1\u7406\u4e0e\u56e2\u961f\u534f\u4f5c\u3002\u901a\u8fc7\u8fb9\u7f18\u8ba1\u7b97\u5b9e\u73b0\u5168\u7403\u52a0\u901f\uff0cDocker \u90e8\u7f72\u63d0\u4f9b\u672c\u5730\u7075\u6d3b\u6027\u3002"}, "topics": ["cloudflare", "cloudflare-workers", "docker", "file-browser", "huggingface", "markdown", "onedrive", "s3", "telegram", "telegrambot", "webdav"], "updated_at": "2026-01-23", "url": "https://github.com/ling-drag0n/CloudPaste"}, {"description": "\u81ea\u52a8\u6293\u53d6 GitHub Stars\uff0c\u751f\u6210 AI \u6458\u8981\uff0c\u4fbf\u4e8e\u68c0\u7d22\u3002", "full_name": "iblogc/GithubStarsIndex", "homepage": "https://iblogc.github.io/GithubStarsIndex/", "language": "Jinja", "name": "GithubStarsIndex", "owner": "iblogc", "stars": 24, "summary": {"en": "GitHubStarsIndex automates fetching GitHub starred repositories and generates AI-powered summaries with technical tags. Supporting incremental updates, concurrent processing, and Jinja2 templating, it outputs structured Markdown and interactive HTML pages with search functionality. The tool seamlessly syncs to Obsidian vaults or deploys to GitHub Pages with multilingual support, transforming scattered stars into a searchable, organized technical knowledge base for efficient asset management.", "tags_en": ["AI Summarization", "Technical Knowledge Base", "Obsidian Sync", "Incremental Update"], "tags_zh": ["AI \u667a\u80fd\u6458\u8981", "\u6280\u672f\u77e5\u8bc6\u5e93", "Obsidian \u540c\u6b65", "\u589e\u91cf\u66f4\u65b0"], "zh": "GitHubStarsIndex \u81ea\u52a8\u5316\u6293\u53d6 GitHub Star \u4ed3\u5e93\uff0c\u8c03\u7528 AI \u751f\u6210\u667a\u80fd\u6458\u8981\u4e0e\u6280\u672f\u6807\u7b7e\u3002\u652f\u6301\u589e\u91cf\u66f4\u65b0\u3001\u9ad8\u5e76\u53d1\u5904\u7406\uff0c\u8f93\u51fa Markdown \u548c\u4ea4\u4e92\u5f0f HTML \u9875\u9762\uff0c\u53ef\u65e0\u7f1d\u540c\u6b65\u81f3 Obsidian \u77e5\u8bc6\u5e93\u6216 GitHub Pages\uff0c\u5b9e\u73b0\u4e2a\u4eba\u6280\u672f\u8d44\u4ea7\u7684\u667a\u80fd\u5316\u7ba1\u7406\u4e0e\u9ad8\u6548\u68c0\u7d22\u3002"}, "topics": [], "updated_at": "2026-02-27", "url": "https://github.com/iblogc/GithubStarsIndex"}, {"description": "A Powerful Serverless Uptime Monitoring \u0026 Status Page on Cloudflare\u0027s Edge Network", "full_name": "VrianCao/Uptimer", "homepage": "https://status.vrian.de", "language": "TypeScript", "name": "Uptimer", "owner": "VrianCao", "stars": 324, "summary": {"en": "Uptimer is a powerful serverless uptime monitoring platform built on Cloudflare\u0027s edge network. Leveraging Workers for HTTP/TCP probes, D1 for persistent storage, and Pages for real-time status display, it provides comprehensive monitoring capabilities. The platform supports multi-language status pages, customizable webhook notifications, incident management, and scheduled maintenance windows. With full-stack serverless architecture and automated CI/CD, it delivers zero-ops deployment while maintaining enterprise-grade reliability.", "tags_en": ["Cloudflare Workers", "Serverless Monitoring", "Edge Computing", "Status Page"], "tags_zh": ["Cloudflare Workers", "\u65e0\u670d\u52a1\u5668\u76d1\u63a7", "\u8fb9\u7f18\u8ba1\u7b97", "\u72b6\u6001\u9875"], "zh": "Uptimer \u662f\u57fa\u4e8e Cloudflare \u8fb9\u7f18\u7f51\u7edc\u7684\u96f6\u8fd0\u7ef4\u76d1\u63a7\u5e73\u53f0\uff0c\u901a\u8fc7 Workers \u6267\u884c HTTP/TCP \u63a2\u6d4b\uff0cD1 \u5b58\u50a8\u6570\u636e\uff0cPages \u63d0\u4f9b\u5b9e\u65f6\u72b6\u6001\u9875\u3002\u652f\u6301\u591a\u8bed\u8a00\u3001Webhook \u901a\u77e5\u3001\u4e8b\u4ef6\u7ba1\u7406\u548c\u7ef4\u62a4\u7a97\u53e3\uff0c\u5b9e\u73b0\u4ece\u76d1\u63a7\u5230\u544a\u8b66\u7684\u4e00\u7ad9\u5f0f\u670d\u52a1\u3002\u5168\u6808 Serverless \u67b6\u6784\uff0c\u4e00\u952e\u90e8\u7f72\uff0c\u5f7b\u5e95\u544a\u522b\u8fd0\u7ef4\u8d1f\u62c5\u3002"}, "topics": ["cloudflare", "cloudflare-d1", "cloudflare-pages", "cloudflare-workers", "uptime-monitor", "uptime-monitoring", "uptimer"], "updated_at": "2026-02-23", "url": "https://github.com/VrianCao/Uptimer"}, {"description": "Browser automation CLI for AI agents", "full_name": "vercel-labs/agent-browser", "homepage": "https://agent-browser.dev", "language": "TypeScript", "name": "agent-browser", "owner": "vercel-labs", "stars": 16450, "summary": {"en": "Rust CLI for AI browser automation with sub-millisecond speed. Features accessibility tree references (@e1) for AI-friendly element interaction, including clicks, form fills, and screenshots.", "tags_en": ["Rust CLI", "AI Agent Automation", "Accessibility Tree References"], "tags_zh": ["Rust CLI", "AI\u4ee3\u7406\u81ea\u52a8\u5316", "\u65e0\u969c\u788d\u6811\u5f15\u7528"], "zh": "Vercel Labs\u63a8\u51fa\u7684AI\u4ee3\u7406\u6d4f\u89c8\u5668\u81ea\u52a8\u5316CLI\u5de5\u5177\uff0c\u57fa\u4e8eRust\u6784\u5efa\u63d0\u4f9b\u6beb\u79d2\u7ea7\u54cd\u5e94\u3002\u6838\u5fc3\u4eae\u70b9\u662f\u901a\u8fc7\u65e0\u969c\u788d\u6811\u5f15\u7528(@e1)\u5b9e\u73b0AI\u53cb\u597d\u7684\u5143\u7d20\u5b9a\u4f4d\uff0c\u652f\u6301\u70b9\u51fb\u3001\u586b\u5145\u3001\u622a\u56fe\u7b49\u64cd\u4f5c\uff0c\u4e3aAI\u4ee3\u7406\u63d0\u4f9b\u9ad8\u6548\u7f51\u9875\u4ea4\u4e92\u80fd\u529b\u3002"}, "topics": [], "updated_at": "2026-02-26", "url": "https://github.com/vercel-labs/agent-browser"}, {"description": "FULL Augment Code, Claude Code, Cluely, CodeBuddy, Comet, Cursor, Devin AI, Junie, Kiro, Leap.new, Lovable, Manus, NotionAI, Orchids.app, Perplexity, Poke, Qoder, Replit, Same.dev, Trae, Traycer AI, VSCode Agent, Warp.dev, Windsurf, Xcode, Z.ai Code, Dia \u0026 v0. (And other Open Sourced) System Prompts, Internal Tools \u0026 AI Models", "full_name": "x1xhlol/system-prompts-and-models-of-ai-tools", "homepage": "", "language": "N/A", "name": "system-prompts-and-models-of-ai-tools", "owner": "x1xhlol", "stars": 125757, "summary": {"en": "This repository reverse-engineers and aggregates system prompts and internal mechanisms from 30+ mainstream AI coding tools including Cursor, Claude Code, Devin AI, and Windsurf. With over 30,000 lines of actual configurations, it offers unprecedented insights into AI agent architectures for prompt engineering optimization, competitive analysis, and AI security research.", "tags_en": ["System Prompts", "AI Coding Agents", "Reverse Engineering", "Internal Mechanisms"], "tags_zh": ["\u7cfb\u7edf\u63d0\u793a\u8bcd", "AI\u7f16\u7a0b\u4ee3\u7406", "\u9006\u5411\u5de5\u7a0b", "\u5185\u90e8\u673a\u5236"], "zh": "\u8be5\u4ed3\u5e93\u9006\u5411\u5de5\u7a0b\u6574\u7406\u4e8630\u4f59\u6b3e\u4e3b\u6d41AI\u7f16\u7a0b\u5de5\u5177\u7684\u7cfb\u7edf\u63d0\u793a\u8bcd\u4e0e\u5185\u90e8\u673a\u5236\uff0c\u6db5\u76d6Cursor\u3001Claude Code\u3001Devin AI\u3001Windsurf\u7b49\u6838\u5fc3\u4ea7\u54c1\u3002\u63d0\u4f9b\u8d85\u8fc730,000\u884c\u771f\u5b9e\u914d\u7f6e\uff0c\u4e3a\u5f00\u53d1\u8005\u3001\u5b89\u5168\u7814\u7a76\u5458\u548c\u67b6\u6784\u5e08\u63d0\u4f9b\u7f55\u89c1\u7684AI\u4ee3\u7406\u67b6\u6784\u5e95\u5c42\u6d1e\u5bdf\uff0c\u9002\u7528\u4e8e\u63d0\u793a\u8bcd\u5de5\u7a0b\u4f18\u5316\u3001\u7ade\u54c1\u5206\u6790\u548cAI\u5b89\u5168\u7814\u7a76\u3002"}, "topics": ["ai", "bolt", "cluely", "copilot", "cursor", "cursorai", "devin", "github-copilot", "lovable", "open-source", "perplexity", "replit", "system-prompts", "trae", "trae-ai", "trae-ide", "v0", "vscode", "windsurf", "windsurf-ai"], "updated_at": "2026-02-17", "url": "https://github.com/x1xhlol/system-prompts-and-models-of-ai-tools"}];
+        
+        let filteredData = [...RAW_DATA];
+        let currentIndex = 0;
+        let currentLang = localStorage.getItem('lang') || 'zh';
+        const PAGE_SIZE = 24;
+
+        // Filter State
+        let activeLanguage = null;
+        let activeTags = new Set();
+        let currentSort = 'pushed_at';
+        
+        const grid = document.getElementById('main-grid');
+        const trigger = document.getElementById('loading-trigger');
+        const searchInput = document.getElementById('search-input');
+        const modal = document.getElementById('details-modal');
+        const langBtn = document.getElementById('lang-btn');
+        const activeFiltersContainer = document.getElementById('active-filters');
+
+        const I18N = {
+            zh: {
+                search: "搜索关键字或标签...",
+                updated: "更新时间",
+                loading: "系统加载中...",
+                end: "已加载全部档案",
+                no_match: "未找到匹配项",
+                orig_desc: "项目描述",
+                ai_sum: "AI 摘要",
+                no_sum: "暂无摘要可用。",
+                github_btn: "前往 GitHub",
+                home_btn: "访问项目官网",
+                lang_all: "语言: 全部",
+                tag_all: "标签: 全部",
+                latest: "最新更新",
+                stars: "Star 数量",
+                alpha: "字母顺序"
+            },
+            en: {
+                search: "SEARCH KEYWORDS OR TAGS...",
+                updated: "UPDATED",
+                loading: "SYSTEM_LOADING...",
+                end: "END_OF_ARCHIVE",
+                no_match: "NO_MATCH_FOUND",
+                orig_desc: "DESCRIPTION",
+                ai_sum: "AI_SUMMARY",
+                no_sum: "No summary available.",
+                github_btn: "VIEW_ON_GITHUB",
+                home_btn: "VISIT_HOMEPAGE",
+                lang_all: "LANGUAGE: ALL",
+                tag_all: "TAGS: ALL",
+                latest: "LATEST",
+                stars: "STARS",
+                alpha: "A-Z"
+            }
+        };
+
+        function updateTexts() {
+            const texts = I18N[currentLang];
+            searchInput.placeholder = texts.search;
+            langBtn.textContent = `LANG: ${currentLang === 'zh' ? 'ZH_CN' : 'EN_US'}`;
+            
+            document.getElementById('l-lang-label').textContent = activeLanguage ? `LANG: ${activeLanguage.toUpperCase()}` : texts.lang_all;
+            document.getElementById('l-tag-label').textContent = texts.tag_all;
+
+            const sortPills = document.querySelectorAll('.sort-pill');
+            sortPills[0].textContent = texts.latest;
+            sortPills[1].textContent = texts.stars;
+            sortPills[2].textContent = texts.alpha;
+
+            applyFiltersAndSort();
+        }
+
+        // --- Data Processing & Stats ---
+        function updateDashboard() {
+            const total = RAW_DATA.length;
+            const avgStars = Math.round(RAW_DATA.reduce((acc, curr) => acc + curr.stars, 0) / total);
+            
+            const langCounts = {};
+            RAW_DATA.forEach(r => {
+                if(r.language && r.language !== 'N/A') {
+                    langCounts[r.language] = (langCounts[r.language] || 0) + 1;
+                }
+            });
+            const topLang = Object.entries(langCounts).sort((a,b) => b[1] - a[1])[0]?.[0] || 'N/A';
+
+            document.getElementById('s-total').textContent = total;
+            document.getElementById('s-avg').innerHTML = `<span class="ui-stars" style="font-size: 1.5rem;"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> ${avgStars}</span>`;
+            document.getElementById('s-top-stack').textContent = topLang.toUpperCase();
+        }
+
+        function getUniqueTags() {
+            const tags = new Set();
+            RAW_DATA.forEach(item => {
+                const itemTags = currentLang === 'zh' ? 
+                    (item.summary.tags_zh || item.summary.tags || []) : 
+                    (item.summary.tags_en || item.summary.tags || []);
+                itemTags.forEach(t => tags.add(t.toLowerCase()));
+            });
+            return Array.from(tags).sort();
+        }
+
+        function getUniqueLanguages() {
+            const langs = new Set();
+            RAW_DATA.forEach(item => {
+                if(item.language && item.language !== 'N/A') langs.add(item.language);
+            });
+            return Array.from(langs).sort();
+        }
+
+        // --- UI Initialization ---
+        function initControls() {
+            updateDashboard();
+            // Language Dropdown
+            const langOptions = document.getElementById('lang-options');
+            const langs = getUniqueLanguages();
+            langOptions.innerHTML = `<div class="dropdown-item" data-value="">ALL LANGUAGES</div>`;
+            langs.forEach(l => {
+                langOptions.innerHTML += `<div class="dropdown-item" data-value="${l}">${l.toUpperCase()}</div>`;
+            });
+
+            // Tag Dropdown
+            const tagOptions = document.getElementById('tag-options');
+            const tags = getUniqueTags();
+            tagOptions.innerHTML = '';
+            tags.forEach(t => {
+                tagOptions.innerHTML += `<div class="dropdown-item" data-value="${t}">#${t.toUpperCase()}</div>`;
+            });
+
+            // Event Listeners
+            document.querySelectorAll('.dropdown-trigger').forEach(trigger => {
+                trigger.onclick = (e) => {
+                    e.stopPropagation();
+                    const current = trigger.parentElement;
+                    document.querySelectorAll('.dropdown').forEach(d => {
+                        if(d !== current) d.classList.remove('active');
+                    });
+                    current.classList.toggle('active');
+                };
+            });
+
+            document.addEventListener('click', () => {
+                document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('active'));
+            });
+
+            document.getElementById('lang-options').onclick = (e) => {
+                const item = e.target.closest('.dropdown-item');
+                if(!item) return;
+                activeLanguage = item.dataset.value || null;
+                applyFiltersAndSort();
+            };
+
+            document.getElementById('tag-options').onclick = (e) => {
+                const item = e.target.closest('.dropdown-item');
+                if(!item) return;
+                activeTags.add(item.dataset.value);
+                applyFiltersAndSort();
+            };
+
+            document.querySelectorAll('.sort-pill').forEach(pill => {
+                pill.onclick = () => {
+                    document.querySelectorAll('.sort-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    currentSort = pill.dataset.sort;
+                    applyFiltersAndSort();
+                };
+            });
+        }
+
+        function renderActiveFilters() {
+            activeFiltersContainer.innerHTML = '';
+            if(activeLanguage) {
+                const chip = document.createElement('div');
+                chip.className = 'filter-chip';
+                chip.innerHTML = `LANG: ${activeLanguage.toUpperCase()} <span onclick="removeLang()">✕</span>`;
+                activeFiltersContainer.appendChild(chip);
+            }
+            activeTags.forEach(tag => {
+                const chip = document.createElement('div');
+                chip.className = 'filter-chip';
+                chip.innerHTML = `#${tag.toUpperCase()} <span onclick="removeTag('${tag}')">✕</span>`;
+                activeFiltersContainer.appendChild(chip);
+            });
+        }
+
+        function removeLang() { activeLanguage = null; applyFiltersAndSort(); }
+        function removeTag(tag) { activeTags.delete(tag); applyFiltersAndSort(); }
+
+        function applyFiltersAndSort() {
+            const rawQuery = searchInput.value.trim().toLowerCase();
+            const keywords = rawQuery ? rawQuery.split(/\s+/) : [];
+            const texts = I18N[currentLang];
+            
+            filteredData = RAW_DATA.filter(item => {
+                // Check if all keywords are matched (AND logic)
+                const searchMatch = keywords.length === 0 || keywords.every(kw => {
+                    const nameMatch = item.full_name.toLowerCase().includes(kw);
+                    const descMatch = (item.description || '').toLowerCase().includes(kw);
+                    const summaryMatch = (item.summary[currentLang] || '').toLowerCase().includes(kw);
+                    return nameMatch || descMatch || summaryMatch;
+                });
+                
+                const langMatch = !activeLanguage || item.language === activeLanguage;
+                
+                const itemTags = new Set(
+                    (currentLang === 'zh' ? (item.summary.tags_zh || item.summary.tags || []) : (item.summary.tags_en || item.summary.tags || []))
+                    .map(t => t.toLowerCase())
+                );
+                const tagMatch = activeTags.size === 0 || Array.from(activeTags).every(t => itemTags.has(t));
+                
+                return searchMatch && langMatch && tagMatch;
+            });
+
+            // Sorting
+            filteredData.sort((a, b) => {
+                if(currentSort === 'stars') return b.stars - a.stars;
+                if(currentSort === 'full_name') return a.full_name.localeCompare(b.full_name);
+                return b.updated_at.localeCompare(a.updated_at);
+            });
+
+            renderActiveFilters();
+            
+            grid.innerHTML = '';
+            currentIndex = 0;
+            loadMore();
+            
+            trigger.textContent = filteredData.length > 0 ? texts.loading : texts.no_match;
+            
+            // Update labels
+            document.getElementById('l-lang-label').textContent = activeLanguage ? `LANG: ${activeLanguage.toUpperCase()}` : texts.lang_all;
+        }
+
+        // --- Render functions ---
+        function createSkeleton() {
+            const div = document.createElement('div');
+            div.className = 'repo-card skeleton';
+            div.style.height = '300px';
+            return div;
+        }
+
+        function createCard(item) {
+            const card = document.createElement('article');
+            card.className = 'repo-card';
+            const texts = I18N[currentLang];
+            
+            const summary = item.summary[currentLang] || item.summary.zh || texts.no_sum;
+            
+            card.innerHTML = `
+                <div class="card-lang ui-tag">${item.language || 'DATA'}</div>
+                <h2 class="card-title ui-title">${item.full_name}</h2>
+                <p class="card-desc">${summary}</p>
+                <div class="card-footer ui-meta">
+                    <span class="ui-stars">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        <span>${item.stars}</span>
+                    </span>
+                    <span>${texts.updated}: ${item.updated_at}</span>
+                </div>
+            `;
+            card.onclick = () => openModal(item);
+            return card;
+        }
+
+        function loadMore() {
+            const texts = I18N[currentLang];
+            if (currentIndex >= filteredData.length) {
+                trigger.textContent = texts.end;
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            const end = Math.min(currentIndex + PAGE_SIZE, filteredData.length);
+            
+            for (let i = currentIndex; i < end; i++) {
+                fragment.appendChild(createCard(filteredData[i]));
+            }
+            
+            grid.appendChild(fragment);
+            currentIndex = end;
+            
+            if (currentIndex >= filteredData.length) {
+                trigger.textContent = texts.end;
+            }
+        }
+
+        // Infinite Scroll
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) loadMore();
+        }, { rootMargin: '400px' });
+
+        observer.observe(trigger);
+
+        searchInput.addEventListener('input', applyFiltersAndSort);
+
+        // --- Initialization ---
+        initControls();
+        updateTexts();
+        function openModal(item) {
+            const texts = I18N[currentLang];
+            document.getElementById('m-lang').textContent = item.language || 'DATA';
+            document.getElementById('m-name').textContent = item.full_name;
+            document.getElementById('m-stars').innerHTML = `
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <span>${item.stars}</span>
+            `;
+            document.getElementById('m-updated').textContent = `${texts.updated}: ${item.updated_at}`;
+            document.getElementById('m-desc').textContent = item.description || (currentLang === 'zh' ? '暂无项目描述。' : 'No original description.');
+            
+            document.getElementById('l-desc').textContent = texts.orig_desc;
+            document.getElementById('l-sum').textContent = texts.ai_sum;
+            
+            document.getElementById('m-summary').textContent = item.summary[currentLang] || item.summary.zh;
+            document.getElementById('m-github').textContent = texts.github_btn;
+            document.getElementById('m-github').href = item.url;
+            
+            const homeBtn = document.getElementById('m-home');
+            homeBtn.textContent = texts.home_btn;
+            if (item.homepage) {
+                homeBtn.href = item.homepage;
+                homeBtn.style.display = 'block';
+            } else {
+                homeBtn.style.display = 'none';
+            }
+
+            // Topics
+            const topicsContainer = document.getElementById('m-topics');
+            topicsContainer.innerHTML = '';
+            (item.topics || []).forEach(t => {
+                const span = document.createElement('span');
+                span.className = 'ui-tag topic-tag';
+                span.textContent = t.toUpperCase();
+                topicsContainer.appendChild(span);
+            });
+
+            // AI Tags
+            const tagsContainer = document.getElementById('m-tags');
+            tagsContainer.innerHTML = '';
+            
+            const tagsField = currentLang === 'zh' ? 'tags_zh' : 'tags_en';
+            const tags = item.summary[tagsField] || item.summary.tags || [];
+            
+            tags.forEach(t => {
+                const span = document.createElement('span');
+                span.className = 'ui-tag topic-tag';
+                span.style.borderColor = 'var(--accent)';
+                span.style.color = 'var(--accent)';
+                span.textContent = `#${t.toUpperCase()}`;
+                tagsContainer.appendChild(span);
+            });
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        window.onclick = (e) => { if (e.target == modal) closeModal(); }
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+        
+        // Initial load
+        loadMore();
+
+        // Real-time Clock
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-GB', { hour12: false });
+            document.getElementById('clock').textContent = timeStr;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Keyboard Shortcut [/]
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '/' && document.activeElement !== searchInput) {
+                e.preventDefault();
+                searchInput.focus();
+            }
+        });
+
+        // Theme Toggle
+        const themeBtn = document.getElementById('theme-btn');
+        const setTheme = (theme) => {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            themeBtn.textContent = theme === 'dark' ? 'UI_THEME: NOIR_MODE' : 'UI_THEME: LIGHT_MODE';
+        };
+
+        themeBtn.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        });
+
+        // Initialize theme from storage (Default: light)
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        setTheme(savedTheme);
+
+        // Language Toggle
+        langBtn.addEventListener('click', () => {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem('lang', currentLang);
+            updateTexts();
+        });
+
+        // Back to Top Logic
+        const backToTop = document.getElementById('back-to-top');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        });
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+    </script>
+</body>
+</html>
