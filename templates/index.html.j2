@@ -12,13 +12,13 @@
 
     <style>
         :root {
-            --bg: #000000;
+            --bg: #080808;
             --fg: #ffffff;
-            --fg-dim: #777777;
+            --fg-dim: #999999;
             --accent: #ff3e00; /* Industrial Orange */
             --accent-soft: rgba(255, 62, 0, 0.1);
-            --surface: #0a0a0a;
-            --border: #1a1a1a;
+            --surface: #121212;
+            --border: #1f1f1f;
             --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             --modal-overlay: rgba(0, 0, 0, 0.85);
             --glass: rgba(255, 255, 255, 0.03);
@@ -47,6 +47,7 @@
             line-height: 1.5;
             -webkit-font-smoothing: antialiased;
             overflow-x: hidden;
+            min-height: 100vh;
         }
 
         /* Scanline & Noise Effect */
@@ -63,7 +64,7 @@
         }
 
         .container {
-            max-width: 1600px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 4rem 2rem;
         }
@@ -78,8 +79,6 @@
             display: grid;
             grid-template-columns: 1.5fr 1fr;
             gap: 2rem;
-            border-bottom: 2px solid var(--fg);
-            padding-bottom: 3rem;
             align-items: end;
         }
 
@@ -383,9 +382,9 @@
         /* Stats Bar Enhancements */
         .stats-dashboard {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 1.5rem;
-            margin-bottom: 4rem;
+            margin-bottom: 1rem;
         }
 
         .stat-card {
@@ -395,6 +394,12 @@
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            border-color: var(--accent);
+            background: rgba(255, 62, 0, 0.02);
         }
 
         .stat-card-label {
@@ -510,7 +515,7 @@
         }
 
         .card-title {
-            font-size: 1.4rem;
+            font-size: 1.25rem;
             margin-bottom: 1rem;
             line-height: 1.3;
         }
@@ -798,11 +803,6 @@
         <header>
             <div class="title-area">
                 <h1>Stars<br>Archive</h1>
-                <div class="header-links" style="justify-content: flex-start; margin-top: 2rem;">
-                    <button id="lang-btn" class="lang-toggle">LANG: ZH_CN</button>
-                    <button id="theme-btn" class="theme-toggle">UI_THEME: NOIR_MODE</button>
-                    <a href="https://github.com/iblogc/GithubStarsIndex" target="_blank">[ SOURCE_CODE ]</a>
-                </div>
             </div>
             <div class="header-stats">
                 <div class="status-badge">
@@ -824,6 +824,12 @@
                         <span class="stat-card-label">TOP_STACK</span>
                         <div class="stat-card-value" id="s-top-stack">--</div>
                     </div>
+                </div>
+
+                <div class="header-links">
+                    <button id="lang-btn" class="lang-toggle">LANG: ZH_CN</button>
+                    <button id="theme-btn" class="theme-toggle">UI_THEME: NOIR_MODE</button>
+                    <a href="https://github.com/iblogc/GithubStarsIndex" target="_blank">[ SOURCE_CODE ]</a>
                 </div>
             </div>
         </header>
@@ -1011,7 +1017,7 @@
             const topLang = Object.entries(langCounts).sort((a,b) => b[1] - a[1])[0]?.[0] || 'N/A';
 
             document.getElementById('s-total').textContent = total;
-            document.getElementById('s-avg').innerHTML = `<b>☆</b> ${avgStars}`;
+            document.getElementById('s-avg').innerHTML = `<span class="ui-stars" style="font-size: 1.5rem;"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> ${avgStars}</span>`;
             document.getElementById('s-top-stack').textContent = topLang.toUpperCase();
         }
 

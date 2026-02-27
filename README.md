@@ -27,6 +27,41 @@
 
 ---
 
+## 流程概览
+
+```mermaid
+graph TD
+    Start([开始]) --> Trigger{触发方式}
+    Trigger -- "Actions (定时/手动)" --> Sync[运行 sync_stars.py]
+    Trigger -- "Local (本地运行)" --> Sync
+    
+    Sync --> FetchGH[抓取 GitHub Stars]
+    FetchGH --> Filter{增量检查}
+    Filter -- "已存在 (跳过)" --> Render
+    Filter -- "新项目 (需处理)" --> FetchRD[获取 README]
+    
+    FetchRD --> AI[AI 智能摘要/标签]
+    AI --> Store[(data/stars.json)]
+    Store --> Render
+    
+    Render[[Jinja2 模板渲染]] --> Output
+    
+    subgraph Output [成果产出]
+        MD[Markdown 归档]
+        HTML[HTML 静态搜索页]
+    end
+    
+    Output --> Dispatch{同步分发}
+    Dispatch -- "VAULT_SYNC" --> Obs[推送至 Obsidian Vault]
+    Dispatch -- "PAGES_SYNC" --> Pages[部署 GitHub Pages]
+    
+    Obs --> End([完成])
+    Pages --> End
+```
+
+---
+
+
 ## 快速开始
 
 ### 第一步：Fork 本仓库
