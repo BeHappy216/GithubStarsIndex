@@ -543,6 +543,17 @@ def main():
         else:
             log.info("✨ 没有新条目需要处理")
 
+        # 清理已取消 star 的项目
+        current_stars = {repo["full_name"] for repo in all_repos}
+        stored_repos = set(store.data["repos"].keys())
+        removed_repos = stored_repos - current_stars
+
+        if removed_repos:
+            for repo_name in removed_repos:
+                del store.data["repos"][repo_name]
+            store.save()
+            log.info(f"🗑️ 清理了 {len(removed_repos)} 个已取消 star 的项目")
+
     # 3. 按 Star 时间重新排序（最新 Star 在前）
     # JSON 里的 repos 是无序的，我们按照 all_repos 的顺序来生成（它是倒序的）
     ordered_repos = []
