@@ -16,13 +16,14 @@
 
 - 🤖 自动抓取 GitHub 账号 Star 的全部仓库
 - 📝 为每个仓库读取 README，调用 AI 生成内容摘要和技术标签
+- 🏷️ **标签智能治理**：内置 `TAG_MAPPING` 映射库，自动合并同义词、归一化技术栈（如 LLM -> AI 大模型），拒绝标签爆炸（可能效果也不好）
 - ⚡️ **高效率**：支持**并发调用** AI 接口，大幅提升处理大量新项目时的速度
 - 🗃️ **数据驱动**：所有信息存储为 `data/stars.json`，支持二次开发
 - 🎨 **模版驱动**：使用 Jinja2 模版生成 Markdown 和 HTML 静态页面
-- ⏭️ 增量更新，已处理项目状态保存在 JSON 中，避免重复消耗 API
+- ⏭️ **智能增量**：新项目调用 AI 总结，旧项目**自动同步最新的 Star 数和元数据**
 - ⏰ GitHub Actions **定时自动运行**，cron 表达式自由配置
 - 🔄 可选：自动将生成的 `stars_zh.md` & `stars_en.md` **推送到 Obsidian Vault 仓库**
-- 🌐 可选：自动同步到 **GitHub Pages** 分支，支持多语言 (ZH/EN) 切换与前端交互搜索
+- 🌐 可选：自动同步到 **GitHub Pages** 分支，支持多语言 (ZH/EN) 切换与页面实时搜索
 - 💻 支持任意 **OpenAI 格式兼容接口**（OpenAI / Azure / 本地 Ollama 等）
 
 ---
@@ -37,11 +38,13 @@ graph TD
     
     Sync --> FetchGH[抓取 GitHub Stars]
     FetchGH --> Filter{增量检查}
-    Filter -- "已存在 (跳过)" --> Render
-    Filter -- "新项目 (需处理)" --> FetchRD[获取 README]
+    Filter -- "已处理项目" --> UpdateMeta[更新 Star 数/元数据]
+    Filter -- "新项目" --> FetchRD[获取 README]
     
     FetchRD --> AI[AI 智能摘要/标签]
-    AI --> Store[(data/stars.json)]
+    AI --> Norm[标签治理/归一化]
+    Norm --> Store[(data/stars.json)]
+    UpdateMeta --> Store
     Store --> Render
     
     Render[[Jinja2 模板渲染]] --> Output
@@ -117,27 +120,47 @@ schedule:
 
 ## 配置项详解
 
-| 变量名               | 类型 | 说明                       | 默认值                      |
-| -------------------- | ---- | -------------------------- | --------------------------- |
-| `GH_USERNAME`        | 必填 | 要同步的 GitHub 用户名     | -                           |
-| `AI_API_KEY`         | 必填 | AI 接口 Key                | -                           |
-| `AI_BASE_URL`        | 可选 | OpenAI 兼容接口地址        | `https://api.openai.com/v1` |
-| `AI_MODEL`           | 可选 | 使用的 AI 模型             | `gpt-4o-mini`               |
-| `OUTPUT_FILENAME`    | 可选 | 生成 MD/HTML 的文件名基准  | `stars`                     |
-| `VAULT_SYNC_ENABLED` | 可选 | 是否开启 Obsidian 同步     | `false`                     |
-| `VAULT_REPO`         | 选填 | Vault 仓库 (`owner/repo`)  | -                           |
-| `VAULT_SYNC_PATH`    | 可选 | Vault 同步的目录路径       | `GitHub-Stars/`             |
-| `PAGES_SYNC_ENABLED` | 可选 | 是否开启 GitHub Pages 部署 | `true`                      |
-| `MAX_CONCURRENCY`    | 可选 | AI 并发处理数 (建议 1-10)  | `1`                         |
-| `GH_TOKEN`           | 选填 | 本地运行时提升 API 额度    | -                           |
+| 变量名               | 类型     | 说明                       | 默认值                      |
+| -------------------- | -------- | -------------------------- | --------------------------- |
+| `GH_USERNAME`        | 必填     | 要同步的 GitHub 用户名     | -                           |
+| `AI_API_KEY`         | 必填     | AI 接口 Key                | -                           |
+| `AI_BASE_URL`        | 可选     | OpenAI 兼容接口地址        | `https://api.openai.com/v1` |
+| `AI_MODEL`           | 可选     | 使用的 AI 模型             | `gpt-4o-mini`               |
+| `OUTPUT_FILENAME`    | 可选     | 生成 MD/HTML 的文件名基准  | `stars`                     |
+| `VAULT_SYNC_ENABLED` | 可选     | 是否开启 Obsidian 同步     | `false`                     |
+| `VAULT_REPO`         | 选填     | Vault 仓库 (`owner/repo`)  | -                           |
+| `VAULT_SYNC_PATH`    | 可选     | Vault 同步的目录路径       | `GitHub-Stars/`             |
+| `PAGES_SYNC_ENABLED` | 可选     | 是否开启 GitHub Pages 部署 | `true`                      |
+| `MAX_CONCURRENCY`    | 可选     | AI 并发处理数 (建议 1-10)  | `1`                         |
+| `GH_TOKEN`           | **建议** | 提升 API 额度，防止限速    | -                           |
 
 ---
 
 ## Obsidian 同步（可选）
 
-1. **设置 Token**: 创建一个具有 **Contents: Write** 权限的 [Fine-grained PAT](https://github.com/settings/personal-access-tokens) 存入 Secret `VAULT_PAT`。
-2. **配置仓库**: 设置 `VAULT_SYNC_ENABLED=true` 和 `VAULT_REPO=用户名/仓库名`。
-3. **设置路径**: 设置 `VAULT_SYNC_PATH`，文件将自动同步到该目录下（自动补全 `_zh.md` / `_en.md`）。
+该功能允许你将生成的 Stars 汇总自动推送到你的 Obsidian Vault (或任何其他) GitHub 仓库中，实现笔记软件内的自动更新。
+
+### 核心机制
+**本质是跨仓库自动同步**：许多 Obsidian 用户使用 GitHub 仓库来存储和同步笔记。本项目通过 GitHub API，将生成的 Markdown 文件直接推送到你指定的另一个仓库中（你的 Vault 仓库）。
+
+### 配置步骤
+
+1.  **准备目标仓库**: 确保你的 Obsidian Vault 已经托管在 GitHub 上。
+2.  **创建权限 Token (PAT)**:
+    - 访问 [Fine-grained PAT 配置页](https://github.com/settings/personal-access-tokens)。
+    - **Repository access**: 选择 "Only select repositories"，并选中你的 **Vault 仓库**。
+    - **Permissions**: 在 "Repository permissions" 中，设置 **Contents** 为 **Read and write**。
+    - 生成 Token 后，将其存入本项目的 **Settings -> Secrets -> Actions** 中，命名为 `VAULT_PAT`。
+3.  **开启同步配置**:
+    - 在本项目的 **Settings -> Variables -> Actions** 中：
+        - 设置 `VAULT_SYNC_ENABLED` 为 `true`。
+        - 设置 `VAULT_REPO` 为 `你的用户名/仓库名` (例如 `iblogc/my-obsidian-vault`)。
+        - 设置 `VAULT_SYNC_PATH` 为你希望在 Vault 中存放的目录 (例如 `Reading/GitHub-Stars/`)。
+4.  **保存完成**: 下次 Action 运行时，生成的 `stars_zh.md` 和 `stars_en.md` 将会自动出现在你的 Vault 仓库中。
+
+> [!TIP]
+> **本地如何查收？**
+> 远程同步完成后，你只需在本地 Obsidian 中使用 **Obsidian Git** 插件执行拉取 (Pull)，或者手动在仓库目录下 `git pull`，最新的 Stars 摘要就会出现在你的笔记库中了。
 
 ---
 
@@ -151,6 +174,46 @@ schedule:
 
 ---
 
+## Docker 部署
+
+如果你希望在服务器上长期运行并自动同步，推荐使用 Docker Compose。
+
+### 1. 准备配置
+复制 `.env.example` 为 `.env` 并填写必要信息：
+```bash
+cp .env.example .env
+# 编辑 .env 填入 GH_USERNAME、AI_API_KEY 和 GH_TOKEN
+```
+
+> [!IMPORTANT]
+> **必须填写 GH_TOKEN**：在 Docker 环境中请求 GitHub API 极易触发 [Rate Limit](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api)。如果不配置 `GH_TOKEN`，API 限制为 60次/小时，抓取稍多 Stars 就会报错。配置后限额提升至 5,000次/小时。
+
+### 2. 启动服务
+使用 Docker Compose 一键启动：
+```bash
+docker compose up -d
+```
+该命令会启动两个容器：
+- `sync`: 核心同步脚本。默认每 **24 小时** 自动抓取并生成一次。你可以在 `.env` 中设置 `SCHEDULE_HOURS` 来调整间隔。
+- `web`: 基于 Nginx 的静态服务器，用于展示生成的索引页面。
+
+### 3. 访问页面
+打开浏览器访问：`http://localhost:8080`
+
+### 4. 常用管理命令
+```bash
+# 查看同步日志
+docker logs -f github-stars-sync
+
+# 立即执行一次强制同步（不等待周期）
+docker compose run --rm sync
+
+# 仅更新页面渲染（不调用 AI）
+docker compose run --rm sync --render-only
+```
+
+---
+
 ## 本地运行
 
 ```bash
@@ -160,6 +223,8 @@ cd GithubStarsIndex
 
 # 安装依赖
 pip install -r requirements.txt
+# 或者使用 uv (推荐)
+uv pip install -r requirements.txt
 
 # 使用 .env 进行配置
 cp .env.example .env
@@ -167,9 +232,10 @@ cp .env.example .env
 
 # [常规运行] 获取原信息、调用 AI 总结并渲染页面
 python scripts/sync_stars.py
+# 或者
+uv run scripts/sync_stars.py
 
 # [仅渲染模式] 跳过抓取和 AI 总结，仅依据本地 stars.json 极速重新渲染 HTML/MD
-# 适用于前端样式调试、模版修改、多语言翻译调整等场景
 python scripts/sync_stars.py --render-only
 ```
 
@@ -185,3 +251,23 @@ python scripts/sync_stars.py --render-only
 | `scripts/sync_stars.py`      | 核心同步与生成脚本                   |
 | `.github/workflows/sync.yml` | GitHub Actions 定时工作流            |
 | `.env.example`               | 配置示例文件                         |
+
+---
+
+## 附录：申请 GitHub Token (GH_TOKEN)
+
+为了保证程序能够顺畅抓取你的全部 Stars，建议申请一个具有只读权限的人员访问令牌（Personal Access Token）。
+
+### 申请步骤：
+1.  访问 [GitHub Fine-grained PAT 页面](https://github.com/settings/personal-access-tokens/new)。
+2.  **Token name**: 填写 `Stars-Index-Sync` (或任意你喜欢的名字)。
+3.  **Expiration**: 建议选择 `90 days` 或 `Custom`。
+4.  **Resource owner**: 选择你的个人账号。
+5.  **Repository access**: 选择 `Public Repositories (read-only)` 即可，或者选 `All repositories`。
+6.  **Permissions**: 无需额外特殊权限，默认的公共访问权限已足够抓取 Stars 列表。
+7.  点击 **Generate token**，**立即复制并保存**该 Token。
+8.  将此 Token 填入 `.env` 文件的 `GH_TOKEN` 字段中。
+
+> [!TIP]
+> 如果你也开启了 **Obsidian 同步 (Vault Sync)**，可以直接复用具有写入权限的 `VAULT_PAT` 作为 `GH_TOKEN`。
+
