@@ -59,14 +59,18 @@ jobs:
         run: |
           set -e
           mkdir -p data
+          tmp_file="$(mktemp)"
           git fetch origin gh-pages --depth=1 || true
-          if git show origin/gh-pages:data/stars.json > data/stars.json 2>/dev/null; then
+          if git show origin/gh-pages:data/stars.json > "$tmp_file" 2>/dev/null && [ -s "$tmp_file" ]; then
+            mv "$tmp_file" data/stars.json
             echo "✅ 已从 gh-pages 恢复 data/stars.json"
             echo "source=gh-pages" >> "$GITHUB_OUTPUT"
-          elif [ -f data/stars.json ]; then
+          elif [ -s data/stars.json ]; then
+            rm -f "$tmp_file"
             echo "✅ 使用 main 分支现有 data/stars.json（首次迁移）"
             echo "source=main" >> "$GITHUB_OUTPUT"
           else
+            rm -f "$tmp_file"
             echo "ℹ️ 未找到可复用 stars.json，将从空数据开始"
             rm -f data/stars.json
             echo "source=none" >> "$GITHUB_OUTPUT"
@@ -127,7 +131,7 @@ jobs:
       - name: 准备 gh-pages 发布目录
         run: |
           set -e
-          test -f data/stars.json || { echo "❌ 未找到 data/stars.json"; exit 1; }
+          test -s data/stars.json || { echo "❌ 未找到有效 data/stars.json"; exit 1; }
           mkdir -p dist/data
           cp data/stars.json dist/data/stars.json
           echo "✅ 已写入 dist/data/stars.json（仅发布到 gh-pages，不提交 main）"
