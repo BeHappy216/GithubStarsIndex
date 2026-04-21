@@ -174,7 +174,7 @@ class DataStore:
             self.data["repos"][full_name] = {
                 "metadata": metadata,
                 "summary": summary,
-                "pushed_at": metadata.get("updated_at", ""),
+                "pushed_at": metadata.get("pushed_at", ""),
                 "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             }
 
@@ -202,10 +202,14 @@ class GitHubClient:
         if token:
             self.session.headers["Authorization"] = f"Bearer {token}"
 
-    def _get(self, url: str, params: dict = None) -> requests.Response:
+    def _get(
+        self, url: str, params: dict = None, headers: Optional[dict] = None
+    ) -> requests.Response:
         for attempt in range(3):
             try:
-                resp = self.session.get(url, params=params, timeout=30)
+                resp = self.session.get(
+                    url, params=params, headers=headers, timeout=30
+                )
                 if resp.status_code == 403 and "rate limit" in resp.text.lower():
                     reset_time = int(
                         resp.headers.get("X-RateLimit-Reset", time.time() + 60)
@@ -235,23 +239,28 @@ class GitHubClient:
                     "sort": "created",
                     "direction": "desc",
                 },
+                headers={"Accept": "application/vnd.github.star+json"},
             )
             data = resp.json()
             if not data:
                 break
             for item in data:
+                repo = item.get("repo", item)
+                starred_at_raw = item.get("starred_at", "")
                 repos.append(
                     {
-                        "full_name": item["full_name"],
-                        "name": item["name"],
-                        "owner": item["owner"]["login"],
-                        "description": item.get("description") or "",
-                        "stars": item["stargazers_count"],
-                        "language": item.get("language") or "N/A",
-                        "url": item["html_url"],
-                        "homepage": item.get("homepage") or "",
-                        "topics": item.get("topics", []),
-                        "updated_at": item.get("pushed_at", "")[:10],
+                        "full_name": repo["full_name"],
+                        "name": repo["name"],
+                        "owner": repo["owner"]["login"],
+                        "description": repo.get("description") or "",
+                        "stars": repo["stargazers_count"],
+                        "language": repo.get("language") or "N/A",
+                        "url": repo["html_url"],
+                        "homepage": repo.get("homepage") or "",
+                        "topics": repo.get("topics", []),
+                        "pushed_at": repo.get("pushed_at", "") or "",
+                        "updated_at": repo.get("updated_at", "") or "",
+                        "starred_at": starred_at_raw or "",
                     }
                 )
             log.info(f"  第 {page} 页：获取 {len(data)} 个，共 {len(repos)} 个")
@@ -557,6 +566,7 @@ def main():
 
     log.info("GitHub Stars Index同步系统开始运行")
     cfg = load_config()
+    gh = GitHubClient(cfg["github"]["username"], cfg["github"].get("token"))
 
     store = DataStore(STARS_JSON_PATH)
     generator = TemplateGenerator(TEMPLATES_DIR)
@@ -576,12 +586,14 @@ def main():
                 continue
             all_repos_data.append(repo_meta)
 
-        # 按星标时间或推送时间排序（这里假设 metadata 中有足够信息，通常我们按推送时间排）
+        # 优先按 star 时间排序，缺失时回退到更新时间
         all_repos = sorted(
-            all_repos_data, key=lambda x: x.get("updated_at", ""), reverse=True
+            all_repos_data,
+            key=lambda x: x.get("updated_at")
+            or x.get("pushed_at", ""),
+            reverse=True,
         )
     else:
-        gh = GitHubClient(cfg["github"]["username"], cfg["github"].get("token"))
         ai = AISummarizer(
             cfg["ai"]["base_url"],
             cfg["ai"]["api_key"],

@@ -1099,8 +1099,13 @@
 
                 <div class="sort-pill-group">
                     <div class="sort-pill active" data-sort="pushed_at">LATEST</div>
+                    <div class="sort-pill" data-sort="starred_at">STARRED</div>
                     <div class="sort-pill" data-sort="stars">STARS</div>
                     <div class="sort-pill" data-sort="full_name">A-Z</div>
+                </div>
+                <div class="sort-pill-group">
+                    <div class="sort-pill active" data-order="desc">DESC</div>
+                    <div class="sort-pill" data-order="asc">ASC</div>
                 </div>
             </div>
             
@@ -1181,6 +1186,7 @@
         let activeTags = new Set();
         let activeTopics = new Set();
         let currentSort = 'pushed_at';
+        let currentOrder = 'desc';
 
         const LANG_ALIAS = {
             'JavaScript': 'JS',
@@ -1218,8 +1224,11 @@
                 tag_all: "标签: 全部",
                 topic_all: "主题: 全部",
                 latest: "最新更新",
+                starred_at: "Star 时间",
                 stars: "Star 数量",
-                alpha: "字母顺序"
+                alpha: "字母顺序",
+                asc: "升序",
+                desc: "降序"
             },
             en: {
                 search: "Search keywords or tags (space-separated AND search)...",
@@ -1236,8 +1245,11 @@
                 tag_all: "Tags: All",
                 topic_all: "Topics: All",
                 latest: "Latest",
+                starred_at: "Starred At",
                 stars: "Stars",
-                alpha: "A-Z"
+                alpha: "A-Z",
+                asc: "ASC",
+                desc: "DESC"
             }
         };
 
@@ -1252,8 +1264,11 @@
 
             const sortPills = document.querySelectorAll('.sort-pill');
             sortPills[0].textContent = texts.latest;
-            sortPills[1].textContent = texts.stars;
-            sortPills[2].textContent = texts.alpha;
+            sortPills[1].textContent = texts.starred_at;
+            sortPills[2].textContent = texts.stars;
+            sortPills[3].textContent = texts.alpha;
+            sortPills[4].textContent = texts.desc;
+            sortPills[5].textContent = texts.asc;
 
             applyFiltersAndSort();
         }
@@ -1427,11 +1442,19 @@
                 applyFiltersAndSort();
             };
 
-            document.querySelectorAll('.sort-pill').forEach(pill => {
+            document.querySelectorAll('.sort-pill[data-sort]').forEach(pill => {
                 pill.onclick = () => {
-                    document.querySelectorAll('.sort-pill').forEach(p => p.classList.remove('active'));
+                    document.querySelectorAll('.sort-pill[data-sort]').forEach(p => p.classList.remove('active'));
                     pill.classList.add('active');
                     currentSort = pill.dataset.sort;
+                    applyFiltersAndSort();
+                };
+            });
+            document.querySelectorAll('.sort-pill[data-order]').forEach(pill => {
+                pill.onclick = () => {
+                    document.querySelectorAll('.sort-pill[data-order]').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    currentOrder = pill.dataset.order;
                     applyFiltersAndSort();
                 };
             });
@@ -1530,9 +1553,17 @@
 
             // Sorting
             filteredData.sort((a, b) => {
-                if(currentSort === 'stars') return b.stars - a.stars;
-                if(currentSort === 'full_name') return a.full_name.localeCompare(b.full_name);
-                return b.updated_at.localeCompare(a.updated_at);
+                let result = 0;
+                if (currentSort === 'stars') {
+                    result = (a.stars || 0) - (b.stars || 0);
+                } else if (currentSort === 'full_name') {
+                    result = a.full_name.localeCompare(b.full_name);
+                } else if (currentSort === 'starred_at') {
+                    result = (a.starred_at || '').localeCompare(b.starred_at || '');
+                } else {
+                    result = (a.pushed_at || a.updated_at || '').localeCompare(b.pushed_at || b.updated_at || '');
+                }
+                return currentOrder === 'asc' ? result : -result;
             });
 
             renderActiveFilters();

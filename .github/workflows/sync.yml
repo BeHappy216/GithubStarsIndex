@@ -15,27 +15,27 @@ on:
   workflow_dispatch:
     inputs:
       force_rebuild:
-        description: "强制重新生成所有摘要（重建 JSON 数据集）"
+        description: '强制重新生成所有摘要（重建 JSON 数据集）'
         required: false
-        default: "false"
+        default: 'false'
         type: choice
         options:
-          - "false"
-          - "true"
+          - 'false'
+          - 'true'
       test_limit:
-        description: "测试模式：限制处理的项目数量（如填 5 则只处理 5 个新项目，留空不限制）"
+        description: '测试模式：限制处理的项目数量（如填 5 则只处理 5 个新项目，留空不限制）'
         required: false
-        default: ""
+        default: ''
         type: string
 
 permissions:
-  contents: write   # 允许 Action 提交文件到本仓库
+  contents: write # 允许 Action 提交文件到本仓库
 
 jobs:
   sync:
     name: 抓取 Stars 并生成摘要
     runs-on: ubuntu-latest
-    timeout-minutes: 120   # 超时保护（Stars 较多时可能耗时长）
+    timeout-minutes: 120 # 超时保护（Stars 较多时可能耗时长）
 
     steps:
       # ── 1. 检出代码 ───────────────────────────────────────
@@ -46,12 +46,35 @@ jobs:
       - name: 设置 Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: "pip"
+          python-version: '3.11'
+          cache: 'pip'
 
       # ── 3. 安装依赖 ───────────────────────────────────────
       - name: 安装依赖
         run: pip install -r requirements.txt
+
+      # ── 4.1 准备 stars.json（优先 gh-pages，回退 main） ───────────
+      - name: 准备 stars.json（gh-pages -> main fallback）
+        id: seed_stars
+        run: |
+          set -e
+          mkdir -p data
+          tmp_file="$(mktemp)"
+          git fetch origin gh-pages --depth=1 || true
+          if git show origin/gh-pages:data/stars.json > "$tmp_file" 2>/dev/null && [ -s "$tmp_file" ]; then
+            mv "$tmp_file" data/stars.json
+            echo "✅ 已从 gh-pages 恢复 data/stars.json"
+            echo "source=gh-pages" >> "$GITHUB_OUTPUT"
+          elif [ -s data/stars.json ]; then
+            rm -f "$tmp_file"
+            echo "✅ 使用 main 分支现有 data/stars.json（首次迁移）"
+            echo "source=main" >> "$GITHUB_OUTPUT"
+          else
+            rm -f "$tmp_file"
+            echo "ℹ️ 未找到可复用 stars.json，将从空数据开始"
+            rm -f data/stars.json
+            echo "source=none" >> "$GITHUB_OUTPUT"
+          fi
 
       # ── 4. 可选：强制重置数据集 ──────────────────────
       - name: 重置数据集（仅在 force_rebuild=true 时执行）
@@ -60,17 +83,39 @@ jobs:
           echo "⚠️ 强制重建模式：删除现有数据"
           rm -rf data/stars.json
 
-      # ── 5. 执行同步脚本 ───────────────────────────────────
+      # # ── 5a. 首次迁移（main -> gh-pages）：仅渲染，避免重新抓取 ───
+      # - name: 首次迁移仅渲染（不抓取）
+      #   if: steps.seed_stars.outputs.source == 'main'
+      #   env:
+      #     # ── Secrets（机密，加密保存）──
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}    # Actions 自动注入，无需手动添加
+      #     AI_API_KEY: ${{ secrets.AI_API_KEY }}        # AI API Key
+      #     VAULT_PAT: ${{ secrets.VAULT_PAT }}          # Vault 仓库写权限 PAT（Vault 同步时必填）
+
+      #     # ── Variables（非机密，明文，在 Settings → Variables 中配置）──
+      #     GH_USERNAME: ${{ vars.GH_USERNAME }}         # 要抓取 Stars 的 GitHub 用户名
+      #     AI_BASE_URL: ${{ vars.AI_BASE_URL }}         # AI 接口地址
+      #     AI_MODEL: ${{ vars.AI_MODEL }}
+      #     MAX_CONCURRENCY: ${{ vars.MAX_CONCURRENCY }}
+      #     OUTPUT_FILENAME: ${{ vars.OUTPUT_FILENAME }}
+      #     VAULT_SYNC_ENABLED: ${{ vars.VAULT_SYNC_ENABLED }}
+      #     VAULT_REPO: ${{ vars.VAULT_REPO }}
+      #     VAULT_SYNC_PATH: ${{ vars.VAULT_SYNC_PATH }}
+      #     TEST_LIMIT: ${{ github.event.inputs.test_limit }}
+      #     PAGES_SYNC_ENABLED: ${{ vars.PAGES_SYNC_ENABLED }}
+      #   run: python scripts/sync_stars.py --render-only
+
+      # ── 5b. 常规模式：正常同步（增量抓取） ─────────────────────
       - name: 同步 GitHub Stars
         env:
           # ── Secrets（机密，加密保存）──
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}    # Actions 自动注入，无需手动添加
-          AI_API_KEY: ${{ secrets.AI_API_KEY }}        # AI API Key
-          VAULT_PAT: ${{ secrets.VAULT_PAT }}          # Vault 仓库写权限 PAT（Vault 同步时必填）
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Actions 自动注入，无需手动添加
+          AI_API_KEY: ${{ secrets.AI_API_KEY }} # AI API Key
+          VAULT_PAT: ${{ secrets.VAULT_PAT }} # Vault 仓库写权限 PAT（Vault 同步时必填）
 
           # ── Variables（非机密，明文，在 Settings → Variables 中配置）──
-          GH_USERNAME: ${{ vars.GH_USERNAME }}         # 要抓取 Stars 的 GitHub 用户名
-          AI_BASE_URL: ${{ vars.AI_BASE_URL }}         # AI 接口地址
+          GH_USERNAME: ${{ vars.GH_USERNAME }} # 要抓取 Stars 的 GitHub 用户名
+          AI_BASE_URL: ${{ vars.AI_BASE_URL }} # AI 接口地址
           AI_MODEL: ${{ vars.AI_MODEL }}
           MAX_CONCURRENCY: ${{ vars.MAX_CONCURRENCY }}
           OUTPUT_FILENAME: ${{ vars.OUTPUT_FILENAME }}
@@ -81,35 +126,20 @@ jobs:
           PAGES_SYNC_ENABLED: ${{ vars.PAGES_SYNC_ENABLED }}
         run: python scripts/sync_stars.py
 
-      # ── 6. 提交变更到本仓库 ───────────────────────────────
-      - name: 提交并推送变更
+      # ── 6. 准备 Pages 发布内容（包含 stars.json） ─────────────
+      - name: 准备 gh-pages 发布目录
         run: |
           set -e
-      
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-      
-          git add data/stars.json
-      
-          if git diff --staged --quiet; then
-            echo "✅ 无新内容，跳过提交"
-            exit 0
-          fi
-      
-          git commit -m "🤖 自动更新 GitHub Stars 摘要 [$(date -u '+%Y-%m-%d %H:%M UTC')]"
-      
-          echo "🔄 同步远程最新代码..."
-          git fetch origin main
-          git rebase origin/main
-      
-          echo "🚀 推送更新..."
-          git push origin main
+          test -s data/stars.json || { echo "❌ 未找到有效 data/stars.json"; exit 1; }
+          mkdir -p dist/data
+          cp data/stars.json dist/data/stars.json
+          echo "✅ 已写入 dist/data/stars.json（仅发布到 gh-pages，不提交 main）"
 
       # ── 7. 部署到 GitHub Pages ─────────────────────────────
       - name: 部署到 GitHub Pages
         if: vars.PAGES_SYNC_ENABLED == 'true'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: dist           # 同步 dist 文件夹的内容
-          branch: gh-pages      # 目标分支
-          clean: true           # 保持分支整洁
+          folder: dist # 同步 dist 文件夹的内容
+          branch: gh-pages # 目标分支
+          clean: true # 保持分支整洁
