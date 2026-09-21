@@ -507,7 +507,8 @@ class AISummarizer:
                     kwargs["response_format"] = {"type": "json_object"}
 
                 resp = self.client.chat.completions.create(**kwargs)
-                data = self._extract_json_payload(resp.choices[0].message.content)
+                resp_context = resp.choices[0].message.content if resp.choices[0].message.content else resp.choices[0].message.reasoning_content
+                data = self._extract_json_payload(resp_context)
                 # 兼容性处理
                 if "tags" in data and "tags_zh" not in data:
                     data["tags_zh"] = data["tags"]
